@@ -107,3 +107,60 @@ provide structured reasoning loops
 help identify high‑value insights
 
 The system remains a tool — not an autonomous thinker.
+
+Figure A - The Closed-Loop Recursion 
+          ┌───────────────┐
+          │   Start/Init  │
+          └───────┬───────┘
+                  │
+                  v
+            ┌───────────┐
+            │  Init A   │
+            └─────┬─────┘
+                  │
+                  v
+            ┌───────────┐
+            │  Run A    │
+            │ (research)│
+            └─────┬─────┘
+                  │
+                  v
+            ┌───────────┐
+            │  Call B   │
+            │(abstract) │
+            └─────┬─────┘
+                  │
+          ┌───────┴───────────────────────────────┐
+          │                                       │
+          v                                       v
+   ┌───────────────┐                       ┌───────────────┐
+   │ Measure time  │                       │ B error?      │
+   └───────┬───────┘                       └───────┬───────┘
+           │                                       │
+           v                                       v
+   ┌───────────────┐                       ┌───────────────┐
+   │ t < 30s ?     │──Yes───retry B──────▶│ Increment B    │
+   └───────┬───────┘                       │ failure count │
+           │ No                            └───────┬───────┘
+           v                                       │
+   ┌───────────────┐                               v
+   │ B success?    │──Yes──────────────────────▶┌───────────┐
+   └───────┬───────┘                             │  Call C  │
+           │ No                                   │(integrate│
+           v                                      │ & return)│
+   ┌───────────────┐                             └─────┬─────┘
+   │ B failure     │                                   │
+   │ count > N ?   │                                   v
+   └───────┬───────┘                             ┌───────────┐
+       Yes │                                     │  Restore  │
+           v                                     │  A state  │
+   ┌───────────────┐                             └─────┬─────┘
+   │ Block B calls │                                   │
+   │ until A reinit│                                   v
+   └───────┬───────┘                             ┌───────────┐
+           │                                     │  Run A    │
+           └───────────────loop back────────────▶│ with new  │
+                                                 │ priorities│
+                                                 └─────┬─────┘
+                                                       │
+                                                       └───▶ (repeat loop)
