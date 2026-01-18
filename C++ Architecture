@@ -1,0 +1,151 @@
+#include <string>
+#include <vector>
+#include <chrono>
+#include <optional>
+
+struct AbstractionEntry {
+    std::string topic;
+    std::string abstraction;      // higher-level concept
+    std::string recallPhrase;     // compressed label
+    double leverageScore;         // how valuable this is
+    // relationships, metadata, etc.
+};
+
+class KnowledgeBase {
+public:
+    void addEntry(const AbstractionEntry& entry);
+    std::optional<AbstractionEntry> findByRecall(const std::string& phrase) const;
+    std::vector<AbstractionEntry> findByTopic(const std::string& topic) const;
+private:
+    std::vector<AbstractionEntry> entries;
+};
+
+class ResearchEngineA {
+public:
+    void initialize();
+    void run();
+    void applyPriors(const std::vector<AbstractionEntry>& priors);
+    void saveCheckpoint();
+    void restoreCheckpoint();
+    // outputs for B:
+    std::vector<std::string> getCurrentFindings() const;
+private:
+    // internal state, checkpoint data, filters, etc.
+};
+
+class AbstractionEngineB {
+public:
+    struct Result {
+        bool success;
+        std::vector<AbstractionEntry> abstractions;
+    };
+
+    Result run(const std::vector<std::string>& findings,
+               const std::chrono::milliseconds& timeLimit);
+
+private:
+    AbstractionEntry buildAbstraction(const std::string& raw);
+    std::string generateRecallPhrase(const AbstractionEntry& entry);
+    double computeLeverageScore(const AbstractionEntry& entry);
+};
+
+class IntegrationEngineC {
+public:
+    void integrate(KnowledgeBase& kb,
+                   const std::vector<AbstractionEntry>& abstractions);
+    void restoreResearchState(ResearchEngineA& A);
+    void performRetentionActivities();
+    void clearObsoleteProcesses();
+};
+
+class ABCController {
+public:
+    ABCController()
+        : bFailureCount(0), bFailureThreshold(3), bBlocked(false) {}
+
+    void runMainLoop();
+
+private:
+    ResearchEngineA A;
+    AbstractionEngineB B;
+    IntegrationEngineC C;
+    KnowledgeBase kb;
+
+    int bFailureCount;
+    int bFailureThreshold;
+    bool bBlocked;
+
+    AbstractionEngineB::Result runBWithTiming(const std::vector<std::string>& findings);
+
+    void handleBFailure();
+    void resetBAfterAInit();
+};
+
+void ABCController::runMainLoop() {
+    A.initialize();
+    resetBAfterAInit();
+
+    while (true) {
+        A.run();
+        auto findings = A.getCurrentFindings();
+
+        if (!bBlocked) {
+            auto bResult = runBWithTiming(findings);
+
+            if (bResult.success) {
+                // store abstractions
+                for (const auto& entry : bResult.abstractions) {
+                    kb.addEntry(entry);
+                }
+
+                // integrate and re-engage
+                C.integrate(kb, bResult.abstractions);
+                C.restoreResearchState(A);
+                C.performRetentionActivities();
+                C.clearObsoleteProcesses();
+
+                // feed priors back into A
+                A.applyPriors(bResult.abstractions);
+            } else {
+                handleBFailure();
+            }
+        } else {
+            // B is blocked; maybe just continue A or wait for some condition
+            // e.g., break, sleep, or re-init A
+        }
+
+        // add stopping condition or external signal here
+    }
+}
+
+AbstractionEngineB::Result ABCController::runBWithTiming(
+    const std::vector<std::string>& findings
+) {
+    using Clock = std::chrono::steady_clock;
+    auto start = Clock::now();
+
+    const std::chrono::milliseconds timeLimit(30000); // 30 seconds
+    auto result = B.run(findings, timeLimit);
+
+    auto end = Clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+    if (!result.success && elapsed < timeLimit) {
+        // immediate retry if under 30s
+        return B.run(findings, timeLimit);
+    }
+
+    return result;
+}
+
+void ABCController::handleBFailure() {
+    ++bFailureCount;
+    if (bFailureCount > bFailureThreshold) {
+        bBlocked = true;
+    }
+}
+
+void ABCController::resetBAfterAInit() {
+    bFailureCount = 0;
+    bBlocked = false;
+}
