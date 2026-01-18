@@ -108,7 +108,7 @@ help identify high‑value insights
 
 The system remains a tool — not an autonomous thinker.
 
-Figure A - The Closed-Loop Recursion 
+                                        Figure A - The Closed-Loop Recursion 
           ┌───────────────┐
           │   Start/Init  │
           └───────┬───────┘
